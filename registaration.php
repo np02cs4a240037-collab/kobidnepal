@@ -1,20 +1,12 @@
 <?php
-// Start session to store form data after validation errors
 session_start();
-
-// Define constants for JSON file and validation rules
 define('USERS_FILE', 'users.json');
 define('MIN_PASSWORD_LENGTH', 8);
-
-// Initialize variables
 $errors = [];
 $success_message = '';
 $form_data = [];
-
-// Load existing users from JSON file
 function loadUsers() {
     if (!file_exists(USERS_FILE)) {
-        // Create empty users file if it doesn't exist
         file_put_contents(USERS_FILE, json_encode([]));
         return [];
     }
@@ -31,8 +23,6 @@ function loadUsers() {
     
     return $users ?: [];
 }
-
-// Save users to JSON file
 function saveUsers($users) {
     $json_data = json_encode($users, JSON_PRETTY_PRINT);
     if ($json_data === false) {
@@ -46,8 +36,6 @@ function saveUsers($users) {
     
     return true;
 }
-
-// Validation functions
 function validateName($name) {
     if (empty(trim($name))) {
         return "Name is required.";
@@ -72,8 +60,6 @@ function validateEmail($email, $users) {
     if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
         return "Please enter a valid email address.";
     }
-    
-    // Check if email already exists
     foreach ($users as $user) {
         if (strtolower($user['email']) === strtolower(trim($email))) {
             return "This email is already registered.";
@@ -114,10 +100,7 @@ function validatePassword($password, $confirm_password) {
     
     return null;
 }
-
-// Process form submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // Get form data
     $form_data = [
         'name' => $_POST['name'] ?? '',
         'email' => $_POST['email'] ?? '',
@@ -126,10 +109,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     ];
     
     try {
-        // Load existing users
         $users = loadUsers();
         
-        // Validate form data
         $name_error = validateName($form_data['name']);
         if ($name_error) $errors['name'] = $name_error;
         
@@ -138,13 +119,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         
         $password_error = validatePassword($form_data['password'], $form_data['confirm_password']);
         if ($password_error) $errors['password'] = $password_error;
-        
-        // If no errors, register the user
         if (empty($errors)) {
-            // Hash the password
             $hashed_password = password_hash($form_data['password'], PASSWORD_DEFAULT);
             
-            // Create new user array
             $new_user = [
                 'id' => uniqid('user_', true),
                 'name' => trim($form_data['name']),
@@ -153,21 +130,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'created_at' => date('Y-m-d H:i:s'),
                 'last_login' => null
             ];
-            
-            // Add new user to users array
             $users[] = $new_user;
-            
-            // Save updated users array
             saveUsers($users);
-            
-            // Clear form data and set success message
             $form_data = [];
             $success_message = "Registration successful! You can now login with your credentials.";
             
-            // Clear any stored form data in session
             unset($_SESSION['form_data']);
         } else {
-            // Store form data in session to repopulate form after error
             $_SESSION['form_data'] = $form_data;
         }
         
@@ -176,7 +145,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $_SESSION['form_data'] = $form_data;
     }
 } else {
-    // On GET request, check for stored form data from previous submission with errors
     if (isset($_SESSION['form_data'])) {
         $form_data = $_SESSION['form_data'];
         unset($_SESSION['form_data']);
@@ -514,7 +482,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </div>
         
         <?php
-        // Display registered users (for testing purposes)
         try {
             $users = loadUsers();
             if (!empty($users)): 
@@ -538,13 +505,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <?php 
             endif;
         } catch (Exception $e) {
-            // Silently fail for users display - not critical
         }
         ?>
     </div>
 
     <script>
-        // Real-time password validation
         document.getElementById('password')?.addEventListener('input', function(e) {
             const password = e.target.value;
             const requirements = {
@@ -555,7 +520,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 special: /[!@#$%^&*()\-_=+{};:,<.>]/.test(password)
             };
             
-            // Update visual indicators (optional enhancement)
             const indicators = document.querySelectorAll('.password-requirements li');
             indicators.forEach((li, index) => {
                 const requirementMet = Object.values(requirements)[index];
@@ -563,9 +527,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             });
         });
         
-        // Form submission enhancement
         document.querySelector('form')?.addEventListener('submit', function(e) {
-            // You can add additional client-side validation here if needed
+
             console.log('Form submitted');
         });
     </script>
